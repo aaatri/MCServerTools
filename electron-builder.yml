@@ -2,20 +2,16 @@ appId: com.mcservertools.app
 productName: MinecraftServerTools
 directories:
   output: release
-  buildResources: build
 files:
   - dist/**/*
   - package.json
 icon: public/icons/app-icon.png
 win:
   target: nsis
-  publish: never
 mac:
   target: dmg
-  publish: never
 linux:
   target: AppImage
-  publish: never
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
