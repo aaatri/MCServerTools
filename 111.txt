@@ -1,0 +1,12 @@
+[main]
+你需要帮忙构建一个跨平台程序（Windows、Linux、Mac OS），并自动区分AMD64或者arm架构，并为接下来工作做准备
+[前后端]
+基于Electron开发
+[主要功能]
+自动搭建我的世界服务器，用户可以自己选择服务端核心，你需要根据用户选择自动下载核心并自动部署服务器，然后支持修改服务器配置文件，在服务器设置界面支持frp设置
+[核心选择]
+Vanilla、CraftBukkit、Spigot、Paper、Purpur、Forge、Fabric、NeoForge、Sponge、Mohist
+你自动查找图标并写入程序
+
+[UI]
+参考"D:\杂项\Github\awesome-design-md-main\design-md"下的UI设计，但我们的程序默认为白色基调，可以切换成深色模式，尽量不要有太多的卡片，设计规范使用Material Design

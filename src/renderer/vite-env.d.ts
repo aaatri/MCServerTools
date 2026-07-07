@@ -1,0 +1,92 @@
+/// <reference types="vite/client" />
+
+interface CoreInfo {
+  id: string
+  name: string
+  type: 'vanilla' | 'bukkit' | 'modded' | 'hybrid'
+  description: string
+  iconUrl?: string
+  color: string
+}
+
+interface CoreVersion {
+  id: string
+  type: 'release' | 'snapshot' | 'beta' | 'alpha'
+}
+
+interface JavaInfo {
+  path: string
+  version: string
+  majorVersion: number
+}
+
+interface DownloadProgress {
+  percent: number
+  loaded: number
+  total: number
+  speed: number
+  fileName: string
+}
+
+interface ServerDetection {
+  jarName: string
+  coreId: string
+  coreName: string
+  version: string
+  jarFiles: string[]
+}
+
+interface ServerEntry {
+  id: string
+  name: string
+  path: string
+  coreId: string
+  coreName: string
+  version: string
+  jarName: string
+  iconUrl?: string
+  createdAt: string
+  maxRam: number
+}
+
+interface ElectronAPI {
+  getCores: () => Promise<CoreInfo[]>
+  getVersions: (coreId: string) => Promise<CoreVersion[]>
+  downloadCore: (coreId: string, version: string, destDir: string) => Promise<string>
+  startServer: (serverDir: string, jarPath: string, jarName: string, maxRam: number, javaPath?: string) => Promise<void>
+  stopServer: () => Promise<void>
+  getServerStatus: () => Promise<string>
+  sendServerCommand: (cmd: string) => Promise<void>
+  serversList: () => Promise<ServerEntry[]>
+  serversAdd: (s: ServerEntry) => Promise<void>
+  serversRemove: (id: string) => Promise<void>
+  serversUpdate: (id: string, u: Partial<ServerEntry>) => Promise<void>
+  readFile: (filePath: string) => Promise<string>
+  writeFile: (filePath: string, content: string) => Promise<void>
+  selectDirectory: () => Promise<string | null>
+  detectJava: () => Promise<JavaInfo | null>
+  detectServer: (dir: string) => Promise<ServerDetection>
+  onServerLog: (callback: (log: string) => void) => () => void
+  onServerStatus: (callback: (status: string) => void) => () => void
+  onDownloadProgress: (callback: (progress: DownloadProgress) => void) => () => void
+
+  frpStart: (config: FrpConfig) => Promise<void>
+  frpStop: () => Promise<void>
+  frpStatus: () => Promise<string>
+  onFrpLog: (callback: (log: string) => void) => () => void
+  onFrpStatus: (callback: (status: string) => void) => () => void
+}
+
+interface FrpConfig {
+  serverAddr: string
+  serverPort: number
+  token: string
+  localPort: number
+  remotePort: number
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI
+  }
+}
