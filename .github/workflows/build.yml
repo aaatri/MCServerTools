@@ -69,27 +69,26 @@ jobs:
       - name: Package
         shell: bash
         run: |
-          ARCH=${{ matrix.arch }}
           SUFFIX=${{ matrix.suffix }}
           OS=${{ matrix.os }}
           mkdir -p release/dist
 
+          # Find the built app directory (electron-builder names vary by platform/arch)
+          APP_DIR=$(ls -d release/*-unpacked release/mac 2>/dev/null | head -1)
+          if [ -z "$APP_DIR" ]; then
+            echo "Error: cannot find built app directory in release/"
+            ls -la release/
+            exit 1
+          fi
+          echo "Found app dir: $APP_DIR"
+
+          cd "$APP_DIR"
+          zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
+          cd ../..
+
+          # On Windows also copy .exe
           if [ "$OS" = "windows-latest" ]; then
-            # Windows: electron-builder outputs to release/win-ARCH-unpacked/
-            cd "release/win-${ARCH}-unpacked"
-            zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
-            cd ../..
-            cp "release/win-${ARCH}-unpacked/MinecraftServerTools.exe" "release/dist/MCServerTools-${SUFFIX}.exe" || true
-          elif [ "$OS" = "macos-latest" ]; then
-            # macOS: electron-builder outputs to release/mac/
-            cd "release/mac"
-            zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
-            cd ../..
-          else
-            # Linux: electron-builder outputs to release/linux-ARCH-unpacked/
-            cd "release/linux-${ARCH}-unpacked"
-            zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
-            cd ../..
+            find "$APP_DIR" -name "*.exe" -exec cp {} "release/dist/MCServerTools-${SUFFIX}.exe" \; 2>/dev/null || true
           fi
 
       - uses: actions/upload-artifact@v4
