@@ -17,32 +17,25 @@ jobs:
           - os: windows-latest
             arch: x64
             suffix: Windows-x64
-            target: win
           - os: windows-latest
             arch: arm64
             suffix: Windows-arm64
-            target: win
           - os: macos-latest
             arch: x64
             suffix: macOS-x64
-            target: mac
           - os: macos-latest
             arch: arm64
             suffix: macOS-arm64
-            target: mac
           - os: ubuntu-latest
             arch: x64
             suffix: Linux-x64
-            target: linux
           - os: ubuntu-latest
             arch: arm64
             suffix: Linux-arm64
-            target: linux
 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -51,45 +44,31 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-xcb1 libxtst6 libxrandr2 \
-            libasound2t64 libnss3 libgtk-3-0 libxkbcommon0 libdrm2 \
-            libgbm1 libxfixes3 libxcomposite1 libxcursor1 libxdamage1 \
-            at-spi2-core xvfb
+          sudo apt-get install -y libx11-xcb1 libxtst6 libxrandr2 libasound2t64 libnss3 libgtk-3-0 xvfb
 
       - run: npm ci
 
       - run: npm run build
 
-      - name: Build
-        run: npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --dir
+      - name: Build app
+        run: npx electron-builder --${{ runner.os == 'macOS' && 'mac' || runner.os == 'Windows' && 'win' || 'linux' }} --${{ matrix.arch }} --dir
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        shell: bash
+
+      - name: Show output
+        run: ls -la release/
 
       - name: Package
-        shell: bash
         run: |
-          SUFFIX=${{ matrix.suffix }}
-          OS=${{ matrix.os }}
           mkdir -p release/dist
-
-          # Find the built app directory (electron-builder names vary by platform/arch)
-          APP_DIR=$(ls -d release/*-unpacked release/mac 2>/dev/null | head -1)
-          if [ -z "$APP_DIR" ]; then
-            echo "Error: cannot find built app directory in release/"
-            ls -la release/
-            exit 1
-          fi
-          echo "Found app dir: $APP_DIR"
-
-          cd "$APP_DIR"
-          zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
-          cd ../..
-
-          # On Windows also copy .exe
-          if [ "$OS" = "windows-latest" ]; then
-            find "$APP_DIR" -name "*.exe" -exec cp {} "release/dist/MCServerTools-${SUFFIX}.exe" \; 2>/dev/null || true
-          fi
+          $dir = Get-ChildItem release -Directory | Where-Object { $_.Name -ne 'dist' } | Select-Object -First 1
+          Write-Host "App dir: $($dir.FullName)"
+          if (-not $dir) { Write-Host "No app dir found"; exit 1 }
+          Compress-Archive -Path "$($dir.FullName)\*" -DestinationPath "release/dist/MCServerTools-${{ matrix.suffix }}.zip" -Force
+          if (${{ matrix.os }} -eq 'windows-latest') {
+            Copy-Item "$($dir.FullName)\MinecraftServerTools.exe" "release/dist/MCServerTools-${{ matrix.suffix }}.exe"
+          }
+        shell: pwsh
 
       - uses: actions/upload-artifact@v4
         with:
