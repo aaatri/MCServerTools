@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/icons/app-icon.ico" width="80" height="80" alt="MCServerTools">
+  <img src="public/icons/app-icon.png" width="64" height="64" alt="MCServerTools">
 </p>
 
 <h1 align="center">MCServerTools</h1>
