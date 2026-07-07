@@ -71,18 +71,3 @@ npm run dev
 npm run build
 ```
 
-## 🩺 环境修复
-
-如果遇到依赖问题，可以运行：
-
-```powershell
-.\scripts\push.ps1
-```
-
-## 开发模型
-
-Vibe Coding 开发，使用 Claude Code 作为 Agent
-
-## 许可证
-
-GPL-2.0
