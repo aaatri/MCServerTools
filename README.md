@@ -81,14 +81,3 @@ MCServerTools/
 └── package.json
 ```
 
-## 🖼 预览
-
-*(截图待补充)*
-
-## 👤 关于
-
-制作者：**小亚**
-
-<p align="center">
-  <sub>Made with ❤️ by 小亚</sub>
-</p>
