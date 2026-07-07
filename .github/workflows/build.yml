@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -36,7 +37,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+
+      - name: Install Linux deps
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev
 
       - run: npm ci
 
@@ -56,11 +63,9 @@ jobs:
           mkdir -p release/dist
 
           if [ "$OS" = "windows-latest" ]; then
-            # zip the whole unpacked folder
             cd release/win-${ARCH}-unpacked
             7z a -tzip "../dist/MCServerTools-${SUFFIX}.zip" .
             cd ../..
-            # also copy the exe
             cp "release/win-${ARCH}-unpacked/MinecraftServerTools.exe" "release/dist/MCServerTools-${SUFFIX}.exe" || true
           elif [ "$OS" = "macos-latest" ]; then
             cd release
