@@ -9,6 +9,10 @@ files:
 icon: public/icons/app-icon.png
 win:
   target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
     - target: portable
       arch:
         - x64
