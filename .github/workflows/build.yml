@@ -15,21 +15,27 @@ jobs:
           - os: windows-latest
             arch: x64
             suffix: Windows-x64
+            target: win
           - os: windows-latest
             arch: arm64
             suffix: Windows-arm64
+            target: win
           - os: macos-latest
             arch: x64
             suffix: macOS-x64
+            target: mac
           - os: macos-latest
             arch: arm64
             suffix: macOS-arm64
+            target: mac
           - os: ubuntu-latest
             arch: x64
             suffix: Linux-x64
+            target: linux
           - os: ubuntu-latest
             arch: arm64
             suffix: Linux-arm64
+            target: linux
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -40,19 +46,33 @@ jobs:
           node-version: 22
 
       - name: Install Linux deps
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev
+          sudo apt-get install -y libx11-xcb1 libxtst6 libxrandr2 \
+            libasound2 libnss3 libgtk-3-0 libxkbcommon0 libdrm2 \
+            libgbm1 libxfixes3 libxcomposite1 libxcursor1 libxdamage1 \
+            at-spi2-core
+
+      - name: Install xvfb (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y xvfb
 
       - run: npm ci
 
       - run: npm run build
 
-      - name: Build
-        run: npx electron-builder --${{ matrix.os == 'macos-latest' && 'mac' || matrix.os == 'ubuntu-latest' && 'linux' || 'win' }} --${{ matrix.arch }} --dir
+      - name: Build (${{ matrix.suffix }})
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run --auto-servernum npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --dir
+          else
+            npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --dir
+          fi
+        shell: bash
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          ELECTRON_RUN_AS_NODE: 1
 
       - name: Package
         shell: bash
