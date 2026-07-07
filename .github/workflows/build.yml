@@ -59,7 +59,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force release/dist | Out-Null
-          $dir = Get-ChildItem release -Directory | Where-Object { $_.Name -ne 'dist' } | Select-Object -First 1
+          $dir = Get-ChildItem release -Directory | Where-Object { $_.Name -ne 'dist' -and -not $_.Name.StartsWith('.') } | Select-Object -First 1
           Write-Host "App dir: $($dir.FullName)"
           if (-not $dir) { Write-Host "No app dir found"; exit 1 }
           Compress-Archive -Path "$($dir.FullName)/*" -DestinationPath "release/dist/MCServerTools-${{ matrix.suffix }}.zip" -Force
