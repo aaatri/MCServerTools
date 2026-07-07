@@ -8,27 +8,14 @@ files:
   - package.json
 icon: public/icons/app-icon.png
 win:
-  target:
-    - target: nsis
-      arch:
-        - x64
-        - arm64
-    - target: portable
-      arch:
-        - x64
-        - arm64
+  target: nsis
+  publish: never
 mac:
-  target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
+  target: dmg
+  publish: never
 linux:
-  target:
-    - target: AppImage
-      arch:
-        - x64
-        - arm64
+  target: AppImage
+  publish: never
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
