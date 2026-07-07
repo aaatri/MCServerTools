@@ -50,29 +50,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-xcb1 libxtst6 libxrandr2 \
-            libasound2 libnss3 libgtk-3-0 libxkbcommon0 libdrm2 \
+            libasound2t64 libnss3 libgtk-3-0 libxkbcommon0 libdrm2 \
             libgbm1 libxfixes3 libxcomposite1 libxcursor1 libxdamage1 \
-            at-spi2-core
-
-      - name: Install xvfb (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get install -y xvfb
+            at-spi2-core xvfb
 
       - run: npm ci
 
       - run: npm run build
 
-      - name: Build (${{ matrix.suffix }})
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            xvfb-run --auto-servernum npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --dir
-          else
-            npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --dir
-          fi
-        shell: bash
+      - name: Build
+        run: npx electron-builder --${{ matrix.target }} --${{ matrix.arch }} --dir
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          ELECTRON_RUN_AS_NODE: 1
+        shell: bash
 
       - name: Package
         shell: bash
@@ -83,18 +73,21 @@ jobs:
           mkdir -p release/dist
 
           if [ "$OS" = "windows-latest" ]; then
-            cd release/win-${ARCH}-unpacked
-            7z a -tzip "../dist/MCServerTools-${SUFFIX}.zip" .
+            # Windows: electron-builder outputs to release/win-ARCH-unpacked/
+            cd "release/win-${ARCH}-unpacked"
+            zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
             cd ../..
             cp "release/win-${ARCH}-unpacked/MinecraftServerTools.exe" "release/dist/MCServerTools-${SUFFIX}.exe" || true
           elif [ "$OS" = "macos-latest" ]; then
-            cd release
-            zip -r "dist/MCServerTools-${SUFFIX}.zip" "mac-${ARCH}-unpacked/"
-            cd ..
+            # macOS: electron-builder outputs to release/mac/
+            cd "release/mac"
+            zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
+            cd ../..
           else
-            cd release
-            zip -r "dist/MCServerTools-${SUFFIX}.zip" "linux-${ARCH}-unpacked/"
-            cd ..
+            # Linux: electron-builder outputs to release/linux-ARCH-unpacked/
+            cd "release/linux-${ARCH}-unpacked"
+            zip -r "../dist/MCServerTools-${SUFFIX}.zip" .
+            cd ../..
           fi
 
       - uses: actions/upload-artifact@v4
