@@ -55,20 +55,17 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Show output
-        run: ls -la release/
-
       - name: Package
+        shell: pwsh
         run: |
-          mkdir -p release/dist
+          New-Item -ItemType Directory -Force release/dist | Out-Null
           $dir = Get-ChildItem release -Directory | Where-Object { $_.Name -ne 'dist' } | Select-Object -First 1
           Write-Host "App dir: $($dir.FullName)"
           if (-not $dir) { Write-Host "No app dir found"; exit 1 }
-          Compress-Archive -Path "$($dir.FullName)\*" -DestinationPath "release/dist/MCServerTools-${{ matrix.suffix }}.zip" -Force
-          if (${{ matrix.os }} -eq 'windows-latest') {
-            Copy-Item "$($dir.FullName)\MinecraftServerTools.exe" "release/dist/MCServerTools-${{ matrix.suffix }}.exe"
+          Compress-Archive -Path "$($dir.FullName)/*" -DestinationPath "release/dist/MCServerTools-${{ matrix.suffix }}.zip" -Force
+          if ('${{ matrix.os }}' -eq 'windows-latest') {
+            Copy-Item "$($dir.FullName)/MinecraftServerTools.exe" "release/dist/MCServerTools-${{ matrix.suffix }}.exe"
           }
-        shell: pwsh
 
       - uses: actions/upload-artifact@v4
         with:
