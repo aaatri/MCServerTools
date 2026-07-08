@@ -11,7 +11,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
   <a href="https://github.com/aaatri/MCServerTools"><img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platform"></a>
-  <a href="https://github.com/aaatri/MCServerTools/releases"><img src="https://img.shields.io/badge/version-0.1.0(alpha)-brightgreen" alt="Version"></a>
+  <a href="https://github.com/aaatri/MCServerTools/releases"><img src="https://img.shields.io/badge/version-1.0.0-brightgreen" alt="Version"></a>
   <a href="https://github.com/aaatri/MCServerTools"><img src="https://img.shields.io/github/stars/aaatri/MCServerTools?style=social" alt="Stars"></a>
 </p>
 

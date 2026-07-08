@@ -106,6 +106,24 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
+          body: |
+            MCServerTools 首个正式版。
+
+            ### 支持的服务器核心
+            Vanilla、Paper、Purpur、CraftBukkit、Spigot、Forge、Fabric、NeoForge、Sponge、Mohist
+
+            ### 功能
+            - 一键下载 & 部署 10 种服务端核心
+            - 图形化 server.properties 配置（中文标注）
+            - 服务端进程控制（启动/停止/控制台命令）
+            - frp 内网穿透（自动下载 frpc）
+            - 浅色/深色主题切换
+            - 支持 macOS / Windows / Linux（AMD64 + ARM64）
+
+            ### 下载说明
+            每个平台提供两种格式：
+            - **安装包**（`.exe` / `.dmg` / `.AppImage`）— 直接安装
+            - **便携包**（`.zip`）— 解压即用
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,8 +3,10 @@ productName: MinecraftServerTools
 directories:
   output: release
 files:
-  - dist/**/*
+  - dist/main/**/*
+  - dist/renderer/**/*
   - package.json
+  - "!dist/**/*.map"
 icon: public/icons/app-icon.png
 win:
   target: nsis
