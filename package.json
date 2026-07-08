@@ -4,7 +4,7 @@
   "description": "跨平台 Minecraft 服务器搭建工具",
   "main": "dist/main/index.js",
   "scripts": {
-    "dev": "tsc -p tsconfig.main.json && concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "npm run build:main && concurrently -k \"tsc -p tsconfig.main.json --watch --preserveWatchOutput\" \"vite\" \"wait-on tcp:5173 && electron dist/main/index.js\"",
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "vite build",
     "build": "tsc -p tsconfig.main.json && vite build",

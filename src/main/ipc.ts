@@ -10,10 +10,17 @@ import { getServers, addServer, removeServer, updateServer } from './store'
 
 const serverManager = new ServerManager()
 const frpManager = new FrpManager()
+let ipcRegistered = false
 
 export function registerIpcHandlers(mainWindow: BrowserWindow) {
   serverManager.setWindow(mainWindow)
   frpManager.setWindow(mainWindow)
+
+  if (ipcRegistered) {
+    return
+  }
+
+  ipcRegistered = true
 
   const emitServersChanged = () => {
     mainWindow.webContents.send('servers:changed')
