@@ -62,7 +62,7 @@ declare global {
     sendServerCommand: (cmd: string) => Promise<void>
     serversList: () => Promise<ServerEntry[]>
     serversAdd: (s: ServerEntry) => Promise<void>
-    serversRemove: (id: string) => Promise<void>
+    serversRemove: (id: string, options?: { deleteFiles?: boolean }) => Promise<void>
     serversUpdate: (id: string, u: Partial<ServerEntry>) => Promise<void>
     onServersChanged: (callback: () => void) => () => void
     readFile: (filePath: string) => Promise<string>

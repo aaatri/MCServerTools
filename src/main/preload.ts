@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   serversList: () => ipcRenderer.invoke('servers:list'),
   serversAdd: (s: any) => ipcRenderer.invoke('servers:add', s),
-  serversRemove: (id: string) => ipcRenderer.invoke('servers:remove', id),
+  serversRemove: (id: string, options?: { deleteFiles?: boolean }) => ipcRenderer.invoke('servers:remove', id, options),
   serversUpdate: (id: string, u: any) => ipcRenderer.invoke('servers:update', id, u),
   onServersChanged: (callback: () => void) => {
     const h = () => callback()

@@ -6,6 +6,7 @@ import {
 } from '@mui/material'
 import { PlayArrow, Stop, Send, Delete, Add, PowerSettingsNew } from '@mui/icons-material'
 import { PROP_MAP, parseProperties, serializeProperties } from '../propertiesMapping'
+import { parseServerProfile, SERVER_PROFILE_FILE } from '../serverProfile'
 import type { PropField } from '../propertiesMapping'
 
 function PropFieldWidget({ key: propKey, value, field, onChange }: {
@@ -74,6 +75,9 @@ export function ServerPage({ active }: { active: boolean }) {
   const [addCoreId, setAddCoreId] = useState('unknown')
   const [addCoreName, setAddCoreName] = useState('unknown')
   const [addVersion, setAddVersion] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+  const refreshTimerRef = useRef<number | null>(null)
 
   const current = servers.find(s => s.id === currentId)
 
@@ -108,10 +112,10 @@ export function ServerPage({ active }: { active: boolean }) {
   useEffect(() => {
     if (!current) return
     setMaxRam(current.maxRam)
-    loadProperties()
+    void loadProperties()
   }, [currentId])
 
-  async function loadProperties() {
+  const loadProperties = useCallback(async () => {
     if (!current) return
     const p = joinPath(current.path, 'server.properties')
     setPropsPath(p)
@@ -123,7 +127,34 @@ export function ServerPage({ active }: { active: boolean }) {
       setPropsText('')
       setPropsMap({})
     }
-  }
+  }, [current])
+
+  useEffect(() => {
+    if (!current || tab !== 2) return
+    void loadProperties()
+  }, [current, tab, loadProperties])
+
+  useEffect(() => {
+    if (refreshTimerRef.current !== null) {
+      window.clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = null
+    }
+
+    if (!current || tab !== 2 || status !== 'running') return
+
+    // Server may generate server.properties shortly after startup.
+    refreshTimerRef.current = window.setTimeout(() => {
+      void loadProperties()
+      refreshTimerRef.current = null
+    }, 1200)
+
+    return () => {
+      if (refreshTimerRef.current !== null) {
+        window.clearTimeout(refreshTimerRef.current)
+        refreshTimerRef.current = null
+      }
+    }
+  }, [current, tab, status, loadProperties])
 
   function handlePropChange(key: string, val: string) {
     setPropsMap(prev => ({ ...prev, [key]: val }))
@@ -155,10 +186,22 @@ export function ServerPage({ active }: { active: boolean }) {
     setCmd('')
   }, [cmd])
 
-  const handleDelete = useCallback(async () => {
+  const handleDeleteOpen = useCallback(() => {
     if (!current) return
-    await window.electronAPI.serversRemove(current.id)
-    await loadServers()
+    setDeleteError('')
+    setDeleteOpen(true)
+  }, [current])
+
+  const handleDeleteAction = useCallback(async (deleteFiles: boolean) => {
+    if (!current) return
+    try {
+      await window.electronAPI.serversRemove(current.id, { deleteFiles })
+      setDeleteOpen(false)
+      setDeleteError('')
+      await loadServers()
+    } catch (e: any) {
+      setDeleteError(e?.message || '删除失败')
+    }
   }, [current])
 
   const handleAddOpen = async () => {
@@ -170,12 +213,25 @@ export function ServerPage({ active }: { active: boolean }) {
     const dir = await window.electronAPI.selectDirectory()
     if (!dir) return
     setAddDir(dir)
+
+    try {
+      const profileText = await window.electronAPI.readFile(joinPath(dir, SERVER_PROFILE_FILE))
+      const profile = parseServerProfile(profileText)
+      if (profile.serverName) setAddName(profile.serverName)
+      if (profile.coreType) setAddCoreId(profile.coreType)
+      if (profile.coreName || profile.coreType) setAddCoreName(profile.coreName || profile.coreType || 'unknown')
+      if (profile.gameVersion) setAddVersion(profile.gameVersion)
+    } catch {
+      /* ignore */
+    }
+
     try {
       const info = await window.electronAPI.detectServer(dir)
       setAddJar(info.jarName)
-      setAddCoreId(info.coreId)
-      setAddCoreName(info.coreName)
-      setAddVersion(info.version)
+      setAddCoreId(prev => prev === 'unknown' ? info.coreId : prev)
+      setAddCoreName(prev => prev === 'unknown' ? info.coreName : prev)
+      setAddVersion(prev => prev ? prev : info.version)
+      setAddName(prev => prev.trim() ? prev : info.coreName)
     } catch { /* ignore */ }
   }
 
@@ -235,8 +291,8 @@ export function ServerPage({ active }: { active: boolean }) {
               ) : (
                 <Button variant="contained" size="small" startIcon={<PlayArrow />} onClick={handleStart}>启动</Button>
               )}
-              <Tooltip title="从列表中移除（不删除文件）">
-                <IconButton color="error" size="small" onClick={handleDelete}><Delete /></IconButton>
+              <Tooltip title="移除服务器">
+                <IconButton color="error" size="small" onClick={handleDeleteOpen}><Delete /></IconButton>
               </Tooltip>
             </>
           )}
@@ -351,6 +407,32 @@ export function ServerPage({ active }: { active: boolean }) {
         <DialogActions>
           <Button onClick={() => setAddOpen(false)}>取消</Button>
           <Button variant="contained" onClick={handleAddConfirm} disabled={!addDir || !addName.trim()}>添加</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>移除服务器</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Typography>
+              请选择如何处理「{current?.name || '当前服务器'}」。
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              服务器目录: {current?.path || '-'}
+            </Typography>
+            {deleteError && <Alert severity="error">{deleteError}</Alert>}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>
+          <Button onClick={() => setDeleteOpen(false)}>取消</Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" color="warning" onClick={() => void handleDeleteAction(false)}>
+              从列表中移除（不删除文件）
+            </Button>
+            <Button variant="contained" color="error" onClick={() => void handleDeleteAction(true)}>
+              从列表中移除并删除文件
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
     </Box>

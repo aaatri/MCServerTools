@@ -45,7 +45,24 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle('servers:list', () => getServers())
   ipcMain.handle('servers:add', (_e, s) => { addServer(s); emitServersChanged() })
-  ipcMain.handle('servers:remove', (_e, id: string) => { removeServer(id); emitServersChanged() })
+  ipcMain.handle('servers:remove', (_e, id: string, options?: { deleteFiles?: boolean }) => {
+    const server = getServers().find(s => s.id === id)
+    if (!server) return
+
+    const shouldDeleteFiles = options?.deleteFiles === true
+    const runningConfig = serverManager.getConfig()
+    if (shouldDeleteFiles && serverManager.running && runningConfig?.serverDir === server.path) {
+      throw new Error('请先停止该服务器，再删除文件')
+    }
+
+    removeServer(id)
+
+    if (shouldDeleteFiles && fs.existsSync(server.path)) {
+      fs.rmSync(server.path, { recursive: true, force: true })
+    }
+
+    emitServersChanged()
+  })
   ipcMain.handle('servers:update', (_e, id: string, u) => { updateServer(id, u); emitServersChanged() })
 
   ipcMain.handle('frp:start', async (_e, config) => { await frpManager.start(config) })

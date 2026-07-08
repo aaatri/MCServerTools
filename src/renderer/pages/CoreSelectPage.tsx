@@ -6,6 +6,7 @@ import {
   Alert,
 } from '@mui/material'
 import { CloudDownload, CheckCircle } from '@mui/icons-material'
+import { SERVER_PROFILE_FILE, serializeServerProfile } from '../serverProfile'
 
 const typeColors: Record<string, string> = {
   vanilla: '#4CAF50', bukkit: '#FF9800', modded: '#2196F3', hybrid: '#F44336',
@@ -23,6 +24,13 @@ function formatSpeed(bytes: number): string {
 function getBaseName(filePath: string): string {
   const parts = filePath.split(/[\\/]/).filter(Boolean)
   return parts[parts.length - 1] || 'server.jar'
+}
+
+function joinPath(...parts: string[]) {
+  return parts
+    .filter(Boolean)
+    .map((part, index) => index === 0 ? part.replace(/[\\/]+$/, '') : part.replace(/^[\\/]+|[\\/]+$/g, ''))
+    .join('/')
 }
 
 export function CoreSelectPage() {
@@ -89,6 +97,15 @@ export function CoreSelectPage() {
       const jarPath = await window.electronAPI.downloadCore(selected, chosenVersion, destDir)
       const core = cores.find(c => c.id === selected)!
       const jarName = getBaseName(jarPath)
+      await window.electronAPI.writeFile(
+        joinPath(destDir, SERVER_PROFILE_FILE),
+        serializeServerProfile({
+          serverName: serverName.trim(),
+          gameVersion: chosenVersion,
+          coreType: selected,
+          coreName: core.name,
+        })
+      )
       await window.electronAPI.serversAdd({
         id: `${Date.now()}`,
         name: serverName.trim(),
