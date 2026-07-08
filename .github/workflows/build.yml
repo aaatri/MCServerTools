@@ -155,6 +155,13 @@ jobs:
             - **安装包**（`.exe` / `.dmg` / `.AppImage`）— 直接安装运行
             - **便携包**（`.zip`）— 解压即用，无需安装
 
+            ### v1.0.1 更新内容
+            - 修复 macOS 启动服务端时的路径拼接错误
+            - 修复下载服务器后"服务器管理"页面不自动刷新
+            - 修复首次启动服务器不会自动同意 EULA
+            - 补充跨平台 server.properties 路径处理
+            - 修正前端类型声明和只读输入框写法
+
             ---
             制作者：小亚 | [GitHub](https://github.com/aaatri/MCServerTools)
           generate_release_notes: true

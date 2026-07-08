@@ -48,7 +48,7 @@ export function App() {
         >
           <Box sx={{ display: page === 'home' ? '' : 'none' }}><HomePage onNavigate={setPage} /></Box>
           <Box sx={{ display: page === 'cores' ? '' : 'none' }}><CoreSelectPage /></Box>
-          <Box sx={{ display: page === 'server' ? '' : 'none' }}><ServerPage /></Box>
+          <Box sx={{ display: page === 'server' ? '' : 'none' }}><ServerPage active={page === 'server'} /></Box>
           <Box sx={{ display: page === 'frp' ? '' : 'none' }}><FrpPage /></Box>
           <Box sx={{ display: page === 'about' ? '' : 'none' }}><AboutPage /></Box>
         </Layout>

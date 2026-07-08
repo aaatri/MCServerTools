@@ -164,7 +164,7 @@ export function CoreSelectPage() {
           />
 
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-            <TextField label="保存目录" value={destDir} size="small" sx={{ flexGrow: 1 }} slotProps={{ input: { readOnly: true } }} />
+            <TextField label="保存目录" value={destDir} size="small" sx={{ flexGrow: 1 }} InputProps={{ readOnly: true }} />
             <Button variant="outlined" onClick={() => setPickDirOpen(true)} disabled={downloading}>选择目录</Button>
           </Box>
 

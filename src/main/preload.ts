@@ -6,8 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   downloadCore: (coreId: string, version: string, destDir: string) =>
     ipcRenderer.invoke('core:download', coreId, version, destDir),
 
-  startServer: (serverDir: string, jarPath: string, jarName: string, maxRam: number, javaPath?: string) =>
-    ipcRenderer.invoke('server:start', serverDir, jarPath, jarName, maxRam, javaPath),
+  startServer: (serverDir: string, jarName: string, maxRam: number, javaPath?: string) =>
+    ipcRenderer.invoke('server:start', serverDir, jarName, maxRam, javaPath),
   stopServer: () => ipcRenderer.invoke('server:stop'),
   getServerStatus: () => ipcRenderer.invoke('server:status'),
   sendServerCommand: (cmd: string) => ipcRenderer.invoke('server:command', cmd),

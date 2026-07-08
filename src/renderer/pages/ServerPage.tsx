@@ -45,7 +45,14 @@ function PropFieldWidget({ key: propKey, value, field, onChange }: {
   )
 }
 
-export function ServerPage() {
+function joinPath(...parts: string[]) {
+  return parts
+    .filter(Boolean)
+    .map((part, index) => index === 0 ? part.replace(/[\\/]+$/, '') : part.replace(/^[\\/]+|[\\/]+$/g, ''))
+    .join('/')
+}
+
+export function ServerPage({ active }: { active: boolean }) {
   const [status, setStatus] = useState('stopped')
   const [logs, setLogs] = useState<string[]>([])
   const [cmd, setCmd] = useState('')
@@ -78,12 +85,23 @@ export function ServerPage() {
     return () => { unsubLog(); unsubStatus() }
   }, [])
 
+  useEffect(() => {
+    if (!active) return
+    loadServers()
+  }, [active])
+
   useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [logs])
 
   async function loadServers() {
     const list = await window.electronAPI.serversList()
     setServers(list)
-    if (!currentId && list.length > 0) setCurrentId(list[0].id)
+    if (list.length === 0) {
+      setCurrentId('')
+      return
+    }
+    if (!currentId || !list.some(server => server.id === currentId)) {
+      setCurrentId(list[0].id)
+    }
   }
 
   useEffect(() => {
@@ -94,7 +112,7 @@ export function ServerPage() {
 
   async function loadProperties() {
     if (!current) return
-    const p = `${current.path}\\server.properties`
+    const p = joinPath(current.path, 'server.properties')
     setPropsPath(p)
     try {
       const text = await window.electronAPI.readFile(p)
@@ -119,9 +137,8 @@ export function ServerPage() {
 
   const handleStart = useCallback(async () => {
     if (!current) return
-    const jarPath = `${current.path}\\${current.jarName}`
     const java = await window.electronAPI.detectJava()
-    await window.electronAPI.startServer(current.path, jarPath, current.jarName, maxRam, java?.path)
+    await window.electronAPI.startServer(current.path, current.jarName, maxRam, java?.path)
   }, [current, maxRam])
 
   const handleStop = useCallback(async () => { await window.electronAPI.stopServer() }, [])
@@ -140,8 +157,7 @@ export function ServerPage() {
   const handleDelete = useCallback(async () => {
     if (!current) return
     await window.electronAPI.serversRemove(current.id)
-    loadServers()
-    setCurrentId('')
+    await loadServers()
   }, [current])
 
   const handleAddOpen = async () => {
@@ -323,7 +339,7 @@ export function ServerPage() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField label="服务器名称" value={addName} onChange={e => setAddName(e.target.value)} fullWidth />
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <TextField label="服务端目录" value={addDir} size="small" sx={{ flexGrow: 1 }} slotProps={{ input: { readOnly: true } }} />
+              <TextField label="服务端目录" value={addDir} size="small" sx={{ flexGrow: 1 }} InputProps={{ readOnly: true }} />
               <Button variant="outlined" onClick={handleAddPickDir}>选择目录</Button>
             </Box>
             <TextField label="JAR 文件名" value={addJar} onChange={e => setAddJar(e.target.value)} fullWidth size="small" helperText="服务端核心文件名称，如 server.jar 或 paper.jar" />

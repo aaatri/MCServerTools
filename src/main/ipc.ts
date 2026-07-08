@@ -25,7 +25,7 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
     downloadCore(coreId, version, destDir, mainWindow)
   )
 
-  ipcMain.handle('server:start', async (_e, serverDir: string, jarPath: string, jarName: string, maxRam: number, javaPath?: string) => {
+  ipcMain.handle('server:start', async (_e, serverDir: string, jarName: string, maxRam: number, javaPath?: string) => {
     serverManager.start({ serverDir, jarPath: path.join(serverDir, jarName), jarName, maxRam, javaPath })
   })
   ipcMain.handle('server:stop', () => serverManager.stop())
