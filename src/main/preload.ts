@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   serversAdd: (s: any) => ipcRenderer.invoke('servers:add', s),
   serversRemove: (id: string) => ipcRenderer.invoke('servers:remove', id),
   serversUpdate: (id: string, u: any) => ipcRenderer.invoke('servers:update', id, u),
+  onServersChanged: (callback: () => void) => {
+    const h = () => callback()
+    ipcRenderer.on('servers:changed', h)
+    return () => { ipcRenderer.removeListener('servers:changed', h) }
+  },
 
   readFile: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
   writeFile: (filePath: string, content: string) => ipcRenderer.invoke('file:write', filePath, content),

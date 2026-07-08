@@ -20,6 +20,11 @@ function formatSpeed(bytes: number): string {
   return `${(bytes / 1048576).toFixed(1)} MB/s`
 }
 
+function getBaseName(filePath: string): string {
+  const parts = filePath.split(/[\\/]/).filter(Boolean)
+  return parts[parts.length - 1] || 'server.jar'
+}
+
 export function CoreSelectPage() {
   const [cores, setCores] = useState<CoreInfo[]>([])
   const [selected, setSelected] = useState<string | null>(null)
@@ -83,7 +88,7 @@ export function CoreSelectPage() {
     try {
       const jarPath = await window.electronAPI.downloadCore(selected, chosenVersion, destDir)
       const core = cores.find(c => c.id === selected)!
-      const jarName = jarPath.split('\\').pop() || jarPath.split('/').pop() || 'server.jar'
+      const jarName = getBaseName(jarPath)
       await window.electronAPI.serversAdd({
         id: `${Date.now()}`,
         name: serverName.trim(),

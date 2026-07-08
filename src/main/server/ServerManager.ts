@@ -55,6 +55,13 @@ export class ServerManager {
     this.config = config
     this.ensureEulaAccepted(config.serverDir)
 
+    if (!fs.existsSync(config.jarPath)) {
+      this.emitLog(`[MST] 启动失败: 找不到服务端 JAR: ${config.jarPath}`)
+      this.emitStatus('error')
+      this.process = null
+      return
+    }
+
     const java = config.javaPath || 'java'
     const args = [
       `-Xmx${config.maxRam}M`,

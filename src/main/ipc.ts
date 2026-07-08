@@ -15,6 +15,10 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
   serverManager.setWindow(mainWindow)
   frpManager.setWindow(mainWindow)
 
+  const emitServersChanged = () => {
+    mainWindow.webContents.send('servers:changed')
+  }
+
   ipcMain.handle('core:getCores', () => getAllProviders().map(p => p.info))
   ipcMain.handle('core:getVersions', async (_e, coreId: string) => {
     const p = getProvider(coreId)
@@ -33,9 +37,9 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle('server:command', (_e, cmd: string) => serverManager.sendCommand(cmd))
 
   ipcMain.handle('servers:list', () => getServers())
-  ipcMain.handle('servers:add', (_e, s) => { addServer(s) })
-  ipcMain.handle('servers:remove', (_e, id: string) => { removeServer(id) })
-  ipcMain.handle('servers:update', (_e, id: string, u) => { updateServer(id, u) })
+  ipcMain.handle('servers:add', (_e, s) => { addServer(s); emitServersChanged() })
+  ipcMain.handle('servers:remove', (_e, id: string) => { removeServer(id); emitServersChanged() })
+  ipcMain.handle('servers:update', (_e, id: string, u) => { updateServer(id, u); emitServersChanged() })
 
   ipcMain.handle('frp:start', async (_e, config) => { await frpManager.start(config) })
   ipcMain.handle('frp:stop', () => { frpManager.stop() })

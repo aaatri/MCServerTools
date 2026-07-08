@@ -81,8 +81,9 @@ export function ServerPage({ active }: { active: boolean }) {
     if (!window.electronAPI?.onServerLog) return
     const unsubLog = window.electronAPI.onServerLog(line => setLogs(prev => [...prev.slice(-500), line]))
     const unsubStatus = window.electronAPI.onServerStatus(s => setStatus(s))
+    const unsubServersChanged = window.electronAPI.onServersChanged(() => { loadServers() })
     loadServers()
-    return () => { unsubLog(); unsubStatus() }
+    return () => { unsubLog(); unsubStatus(); unsubServersChanged() }
   }, [])
 
   useEffect(() => {
