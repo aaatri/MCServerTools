@@ -156,11 +156,16 @@ jobs:
             - **便携包**（`.zip`）— 解压即用，无需安装
 
             ### v1.0.1 更新内容
-            - 修复 macOS 启动服务端时的路径拼接错误
-            - 修复下载服务器后"服务器管理"页面不自动刷新
-            - 修复首次启动服务器不会自动同意 EULA
-            - 补充跨平台 server.properties 路径处理
-            - 修正前端类型声明和只读输入框写法
+            - 修复 npm run dev 时 Electron 窗口不显示
+            - 修复开发环境自动弹出 Developer Tools
+            - 修复关闭 Electron 窗口后应用进程未立即退出
+            - 修复服务端启动后"配置"页面不自动刷新 server.properties
+            - 新增删除服务器二次确认，可选择仅从列表移除或同时删除文件
+            - 新增运行中服务器删除保护，删除文件前需先停服
+            - 新增下载完成后自动生成 profilemcsrv.toml
+            - 新增"添加已有服务器"时自动读取 profilemcsrv.toml 回填服务器信息
+            - 优化主进程窗口生命周期与启动日志处理
+            - 修复 IPC 重复注册的潜在问题
 
             ---
             制作者：小亚 | [GitHub](https://github.com/aaatri/MCServerTools)
