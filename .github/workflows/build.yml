@@ -107,23 +107,56 @@ jobs:
         with:
           files: artifacts/**/*
           body: |
-            MCServerTools 首个正式版。
+            MCServerTools 首个正式版发布 🎉
 
-            ### 支持的服务器核心
-            Vanilla、Paper、Purpur、CraftBukkit、Spigot、Forge、Fabric、NeoForge、Sponge、Mohist
+            ### 服务器核心管理
+            支持 10 种服务端核心**一键下载与部署**：
+            - **原版** Vanilla
+            - **Bukkit 系列** Paper、Purpur、CraftBukkit、Spigot
+            - **Mod 加载器** Forge、Fabric、NeoForge、Sponge
+            - **混合核心** Mohist
 
-            ### 功能
-            - 一键下载 & 部署 10 种服务端核心
-            - 图形化 server.properties 配置（中文标注）
-            - 服务端进程控制（启动/停止/控制台命令）
-            - frp 内网穿透（自动下载 frpc）
-            - 浅色/深色主题切换
-            - 支持 macOS / Windows / Linux（AMD64 + ARM64）
+            下载时实时显示**进度条**、**下载速度**和**文件名**，下载完成后自动保存到服务器列表。
+
+            ### 服务器管理
+            - **多服务器管理** — 支持添加多台服务器，下拉切换，自定义名称
+            - **启动/停止** — 一键启停，支持内存分配（512MB - 16GB）
+            - **日志查看** — 实时日志输出，支持滚动查看
+            - **控制台命令** — 输入 Minecraft 指令（/op、/gamemode 等）
+            - **强制停止** — 进程无响应时可强制终止
+            - **Java 自动检测** — 自动识别系统 Java 环境
+
+            ### 配置编辑器
+            - **图形化 server.properties 编辑器** — 35+ 项配置中文标注
+            - 支持开关（正版验证、PVP、白名单等）
+            - 下拉选择（难度、游戏模式等）
+            - 数字/文本输入（端口、视距、种子等）
+            - 无需手动编辑配置文件
+
+            ### FRP 内网穿透
+            - **内置 frpc 客户端** — 首次启动自动下载
+            - 支持 frp 服务器地址、端口、Token 配置
+            - 本地端口/远程端口自定义
+            - 连接状态实时显示 + 日志输出
+
+            ### 界面
+            - **Material Design** 设计风格
+            - **浅色/深色主题**一键切换
+            - 侧边栏导航，页面切换不丢失状态
+            - 关于页面（版本信息、GitHub 链接）
+
+            ### 跨平台支持
+            - **Windows** AMD64 / ARM64（NSIS 安装包 + 便携版）
+            - **macOS** Intel / Apple Silicon（DMG 安装包 + 便携版）
+            - **Linux** AMD64 / ARM64（AppImage + 便携版）
 
             ### 下载说明
             每个平台提供两种格式：
-            - **安装包**（`.exe` / `.dmg` / `.AppImage`）— 直接安装
-            - **便携包**（`.zip`）— 解压即用
+            - **安装包**（`.exe` / `.dmg` / `.AppImage`）— 直接安装运行
+            - **便携包**（`.zip`）— 解压即用，无需安装
+
+            ---
+            制作者：小亚 | [GitHub](https://github.com/aaatri/MCServerTools)
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
