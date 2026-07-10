@@ -5,6 +5,7 @@ import { BrowserWindow } from 'electron'
 
 interface PaperProject { version_groups: string[]; versions: string[] }
 interface PaperBuilds { builds: Array<{ build: number; downloads: { application: { name: string } } }> }
+interface PaperFillProject { versions?: Record<string, string[]> }
 
 export class PaperProvider implements CoreProvider {
   info: CoreInfo = {
@@ -19,10 +20,32 @@ export class PaperProvider implements CoreProvider {
   private baseUrl = 'https://api.papermc.io/v2/projects/paper'
 
   async fetchVersions(): Promise<CoreVersion[]> {
-    const project = await fetchJson<PaperProject>(this.baseUrl)
-    return project.versions
-      .filter(v => !v.includes('pre') && !v.includes('rc'))
+    const sources = await Promise.allSettled([
+      this.fetchFromApi(),
+      this.fetchFromDownloadsService(),
+    ])
+
+    const versions = new Set<string>()
+    for (const source of sources) {
+      if (source.status !== 'fulfilled') continue
+      source.value.forEach(version => versions.add(version))
+    }
+
+    return Array.from(versions)
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }))
       .map(v => ({ id: v, type: 'release' as const }))
+  }
+
+  private async fetchFromApi(): Promise<string[]> {
+    const project = await fetchJson<PaperProject>(this.baseUrl)
+    return project.versions.filter(v => !/(pre|rc)/i.test(v))
+  }
+
+  private async fetchFromDownloadsService(): Promise<string[]> {
+    const project = await fetchJson<PaperFillProject>('https://fill.papermc.io/v3/projects/paper')
+    return Object.values(project.versions || {})
+      .flat()
+      .filter(v => !/(pre|rc)/i.test(v))
   }
 
   async download(version: string, destDir: string, win?: BrowserWindow): Promise<string> {

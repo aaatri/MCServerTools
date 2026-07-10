@@ -27,10 +27,22 @@ export class VanillaProvider implements CoreProvider {
   private manifestUrl = 'https://piston-meta.mojang.com/mc/game/version_manifest.json'
 
   async fetchVersions(): Promise<CoreVersion[]> {
-    const manifest = await fetchJson<Manifest>(this.manifestUrl)
-    return manifest.versions
-      .filter(v => v.type === 'release')
-      .map(v => ({ id: v.id, type: v.type as 'release' | 'snapshot' }))
+    const manifests = await Promise.allSettled([
+      fetchJson<Manifest>(this.manifestUrl),
+      fetchJson<Manifest>('https://launchermeta.mojang.com/mc/game/version_manifest.json'),
+    ])
+
+    const versions = new Set<string>()
+    for (const manifest of manifests) {
+      if (manifest.status !== 'fulfilled') continue
+      manifest.value.versions
+        .filter(v => v.type === 'release')
+        .forEach(v => versions.add(v.id))
+    }
+
+    return Array.from(versions)
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }))
+      .map(v => ({ id: v, type: 'release' as const }))
   }
 
   async download(version: string, destDir: string, win?: BrowserWindow): Promise<string> {

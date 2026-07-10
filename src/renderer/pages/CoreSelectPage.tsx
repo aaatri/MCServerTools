@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Box, Typography, Grid, Paper, Chip, Button, Avatar,
   Select, MenuItem, FormControl, InputLabel, LinearProgress,
@@ -38,6 +38,8 @@ export function CoreSelectPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const [versions, setVersions] = useState<CoreVersion[]>([])
   const [chosenVersion, setChosenVersion] = useState('')
+  const [loadingVersions, setLoadingVersions] = useState(false)
+  const [versionMessage, setVersionMessage] = useState('请选择版本')
   const [downloading, setDownloading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [speed, setSpeed] = useState(0)
@@ -48,6 +50,7 @@ export function CoreSelectPage() {
   const [error, setError] = useState('')
   const [pickDirOpen, setPickDirOpen] = useState(false)
   const [javaInfo, setJavaInfo] = useState('检测中...')
+  const versionRequestRef = useRef(0)
 
   useEffect(() => {
     if (window.electronAPI?.getCores) {
@@ -71,13 +74,29 @@ export function CoreSelectPage() {
   }, [])
 
   async function handleSelect(coreId: string) {
+    const requestId = ++versionRequestRef.current
     setSelected(coreId)
     setChosenVersion('')
     setDone(false)
     setError('')
     setServerName('')
-    try { const v = await window.electronAPI.getVersions(coreId); setVersions(v) }
-    catch { setVersions([]) }
+    setVersions([])
+    setVersionMessage('读取版本中')
+    setLoadingVersions(true)
+    try {
+      const v = await window.electronAPI.getVersions(coreId)
+      if (requestId !== versionRequestRef.current) return
+      setVersions(v)
+      setVersionMessage(v.length > 0 ? '请选择版本' : '暂无可选版本（官方源未返回数据）')
+    } catch {
+      if (requestId !== versionRequestRef.current) return
+      setVersions([])
+      setVersionMessage('版本列表获取失败，请稍后重试')
+    } finally {
+      if (requestId === versionRequestRef.current) {
+        setLoadingVersions(false)
+      }
+    }
   }
 
   async function handlePickDir() {
@@ -171,22 +190,34 @@ export function CoreSelectPage() {
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>配置下载 - {selectedCore?.name}</Typography>
 
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>版本</Typography>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>版本</InputLabel>
-            <Select value={chosenVersion} label="版本" onChange={e => setChosenVersion(e.target.value)} disabled={versions.length === 0 || downloading}>
+            <Select
+              value={chosenVersion}
+              onChange={e => setChosenVersion(e.target.value)}
+              disabled={loadingVersions || downloading}
+              displayEmpty
+              renderValue={(value) => {
+                if (!value) return versionMessage
+                return value
+              }}
+            >
+              {loadingVersions && <MenuItem disabled value="">读取版本中</MenuItem>}
               {versions.map(v => <MenuItem key={v.id} value={v.id}>{v.id}</MenuItem>)}
-              {versions.length === 0 && <MenuItem disabled>暂无可选版本（核心未实现）</MenuItem>}
+              {!loadingVersions && versions.length === 0 && <MenuItem disabled>{versionMessage}</MenuItem>}
             </Select>
           </FormControl>
 
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>服务器名称</Typography>
           <TextField
-            fullWidth label="服务器名称" placeholder="例如：我的生存服务器"
+            fullWidth placeholder="例如：我的生存服务器"
             value={serverName} onChange={e => setServerName(e.target.value)}
             sx={{ mb: 2 }} disabled={downloading}
           />
 
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>保存目录</Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-            <TextField label="保存目录" value={destDir} size="small" sx={{ flexGrow: 1 }} InputProps={{ readOnly: true }} />
+            <TextField value={destDir} size="small" sx={{ flexGrow: 1 }} InputProps={{ readOnly: true }} />
             <Button variant="outlined" onClick={() => setPickDirOpen(true)} disabled={downloading}>选择目录</Button>
           </Box>
 

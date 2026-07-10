@@ -1,5 +1,5 @@
 import { CoreProvider, CoreInfo, CoreVersion } from './CoreProvider'
-import { fetchJson, downloadFile } from '../utils/download'
+import { fetchJson, fetchText, downloadFile } from '../utils/download'
 import * as path from 'path'
 import { BrowserWindow } from 'electron'
 
@@ -14,13 +14,41 @@ export class ForgeProvider implements CoreProvider {
   }
 
   async fetchVersions(): Promise<CoreVersion[]> {
+    const sources = await Promise.allSettled([
+      this.fetchFromPromotions(),
+      this.fetchFromMetadataXml(),
+    ])
+
+    const versions = new Set<string>()
+    for (const source of sources) {
+      if (source.status !== 'fulfilled') continue
+      source.value.forEach(version => versions.add(version))
+    }
+
+    return Array.from(versions)
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }))
+      .map(v => ({ id: v, type: 'release' as const }))
+  }
+
+  private async fetchFromPromotions(): Promise<string[]> {
     const data = await fetchJson<ForgePromos>('https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json')
-    const mcVersions = new Set<string>()
+    const versions = new Set<string>()
     for (const key of Object.keys(data.promos)) {
       const mcVer = key.split('-')[0]
-      if (mcVer && /^\d+\.\d+/.test(mcVer)) mcVersions.add(mcVer)
+      if (mcVer && /^\d+\.\d+/.test(mcVer)) versions.add(mcVer)
     }
-    return Array.from(mcVersions).map(v => ({ id: v, type: 'release' as const }))
+    return Array.from(versions)
+  }
+
+  private async fetchFromMetadataXml(): Promise<string[]> {
+    const xml = await fetchText('https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml')
+    const versions = new Set<string>()
+    for (const match of xml.matchAll(/<version>([^<]+)<\/version>/g)) {
+      const fullVersion = match[1]
+      const mcVer = fullVersion.split('-')[0]
+      if (mcVer && /^\d+\.\d+/.test(mcVer)) versions.add(mcVer)
+    }
+    return Array.from(versions)
   }
 
   async download(version: string, destDir: string, win?: BrowserWindow): Promise<string> {

@@ -11,10 +11,22 @@ export class FabricProvider implements CoreProvider {
   }
 
   async fetchVersions(): Promise<CoreVersion[]> {
-    const gameVersions = await fetchJson<any[]>('https://meta.fabricmc.net/v2/versions/game')
-    return gameVersions
-      .filter((v: any) => v.stable)
-      .map((v: any) => ({ id: v.version, type: 'release' as const }))
+    const sources = await Promise.allSettled([
+      fetchJson<any[]>('https://meta.fabricmc.net/v2/versions/game'),
+      fetchJson<any[]>('https://meta.fabricmc.net/v1/versions/game'),
+    ])
+
+    const versions = new Set<string>()
+    for (const source of sources) {
+      if (source.status !== 'fulfilled') continue
+      source.value
+        .filter((v: any) => v.stable)
+        .forEach((v: any) => versions.add(v.version))
+    }
+
+    return Array.from(versions)
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }))
+      .map(v => ({ id: v, type: 'release' as const }))
   }
 
   async download(version: string, destDir: string, win?: BrowserWindow): Promise<string> {

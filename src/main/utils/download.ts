@@ -79,3 +79,14 @@ export function fetchJson<T>(url: string): Promise<T> {
     }).on('error', reject)
   })
 }
+
+export function fetchText(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http
+    protocol.get(url, { headers: { 'User-Agent': 'MinecraftServerTools/0.1.0' } }, (res) => {
+      let data = ''
+      res.on('data', (chunk) => { data += chunk })
+      res.on('end', () => { resolve(data) })
+    }).on('error', reject)
+  })
+}
