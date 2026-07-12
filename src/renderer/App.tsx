@@ -1,5 +1,18 @@
-import React, { Component, useMemo, useState } from 'react'
-import { Box, Button, CssBaseline, ThemeProvider, Typography } from '@mui/material'
+import React, { Component, useEffect, useMemo, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  CssBaseline,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  LinearProgress,
+  Stack,
+  ThemeProvider,
+  Typography,
+} from '@mui/material'
 import { Layout } from './components/Layout'
 import { AboutPage } from './pages/AboutPage'
 import { CoreSelectPage } from './pages/CoreSelectPage'
@@ -10,6 +23,26 @@ import { SettingsPage } from './pages/SettingsPage'
 import { darkTheme, lightTheme } from './theme'
 
 export type Page = 'home' | 'cores' | 'server' | 'frp' | 'settings' | 'about'
+
+function compareVersions(currentVersion: string, latestVersion: string): number {
+  const current = currentVersion.split('.').map(part => parseInt(part, 10) || 0)
+  const latest = latestVersion.split('.').map(part => parseInt(part, 10) || 0)
+  const length = Math.max(current.length, latest.length)
+
+  for (let i = 0; i < length; i += 1) {
+    const left = current[i] || 0
+    const right = latest[i] || 0
+    if (left !== right) return left - right
+  }
+
+  return 0
+}
+
+function formatSpeed(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B/s`
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB/s`
+  return `${(bytes / 1048576).toFixed(1)} MB/s`
+}
 
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
@@ -42,7 +75,56 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: Er
 export function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [page, setPage] = useState<Page>('home')
+  const [currentVersion, setCurrentVersion] = useState('')
+  const [startupUpdateInfo, setStartupUpdateInfo] = useState<LatestReleaseInfo | null>(null)
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
+  const [updateDownloading, setUpdateDownloading] = useState(false)
+  const [updateDownloadProgress, setUpdateDownloadProgress] = useState<DownloadProgress | null>(null)
+  const [updateError, setUpdateError] = useState('')
   const theme = useMemo(() => (darkMode ? darkTheme : lightTheme), [darkMode])
+
+  useEffect(() => {
+    let active = true
+
+    window.electronAPI.getAppVersion()
+      .then((version) => {
+        if (!active) return
+        setCurrentVersion(version)
+        return window.electronAPI.checkForUpdates().then((latest) => {
+          if (!active) return
+          if (compareVersions(version, latest.version) < 0) {
+            setStartupUpdateInfo(latest)
+            setUpdateDialogOpen(true)
+          }
+        })
+      })
+      .catch(() => undefined)
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.onUpdateDownloadProgress((progress) => {
+      setUpdateDownloadProgress(progress)
+    })
+
+    return unsubscribe
+  }, [])
+
+  async function handleUpdateNow() {
+    setUpdateDownloading(true)
+    setUpdateError('')
+    setUpdateDownloadProgress(null)
+
+    try {
+      await window.electronAPI.downloadAndInstallUpdate()
+    } catch (err: any) {
+      setUpdateError(`下载更新失败: ${err.message || 'unknown error'}`)
+      setUpdateDownloading(false)
+    }
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -73,6 +155,55 @@ export function App() {
             <AboutPage />
           </Box>
         </Layout>
+
+        <Dialog open={updateDialogOpen} onClose={() => !updateDownloading && setUpdateDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>发现新版本</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <Typography variant="body1">
+                当前版本: {currentVersion || '...'}
+              </Typography>
+              <Typography variant="body1">
+                最新版本: {startupUpdateInfo?.version || '...'}
+              </Typography>
+
+              {startupUpdateInfo?.notes?.length ? (
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>更新内容</Typography>
+                  <Stack spacing={0.75}>
+                    {startupUpdateInfo.notes.map((note, index) => (
+                      <Typography key={`${index}-${note}`} variant="body2">
+                        {index + 1}. {note}
+                      </Typography>
+                    ))}
+                  </Stack>
+                </Box>
+              ) : null}
+
+              {updateDownloading && updateDownloadProgress && (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    正在下载更新: {updateDownloadProgress.fileName}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {updateDownloadProgress.percent}% · {formatSpeed(updateDownloadProgress.speed)}
+                  </Typography>
+                  <LinearProgress variant="determinate" value={updateDownloadProgress.percent} />
+                </Box>
+              )}
+
+              {updateError && <Alert severity="error">{updateError}</Alert>}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setUpdateDialogOpen(false)} disabled={updateDownloading}>
+              稍后
+            </Button>
+            <Button variant="contained" onClick={handleUpdateNow} disabled={updateDownloading}>
+              {updateDownloading ? '下载中...' : '下载并安装'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </ErrorBoundary>
     </ThemeProvider>
   )

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { OpenInNew, SystemUpdateAlt } from '@mui/icons-material'
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { Download, OpenInNew, SystemUpdateAlt } from '@mui/icons-material'
+import { Alert, Box, Button, CircularProgress, LinearProgress, Paper, Stack, Typography } from '@mui/material'
 
 function compareVersions(currentVersion: string, latestVersion: string): number {
   const current = currentVersion.split('.').map(part => parseInt(part, 10) || 0)
@@ -16,15 +16,31 @@ function compareVersions(currentVersion: string, latestVersion: string): number 
   return 0
 }
 
+function formatSpeed(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B/s`
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB/s`
+  return `${(bytes / 1048576).toFixed(1)} MB/s`
+}
+
 export function SettingsPage() {
   const [currentVersion, setCurrentVersion] = useState('')
   const [latestInfo, setLatestInfo] = useState<LatestReleaseInfo | null>(null)
   const [loading, setLoading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
   const [checkedAt, setCheckedAt] = useState('')
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null)
 
   useEffect(() => {
     window.electronAPI.getAppVersion().then(setCurrentVersion).catch(() => setCurrentVersion('unknown'))
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.onUpdateDownloadProgress((progress) => {
+      setDownloadProgress(progress)
+    })
+
+    return unsubscribe
   }, [])
 
   const hasUpdate = !!(latestInfo && currentVersion && compareVersions(currentVersion, latestInfo.version) < 0)
@@ -40,6 +56,20 @@ export function SettingsPage() {
       setError(`检查更新失败: ${err.message || 'unknown error'}`)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDownloadAndInstall() {
+    setDownloading(true)
+    setError('')
+    setDownloadProgress(null)
+
+    try {
+      await window.electronAPI.downloadAndInstallUpdate()
+    } catch (err: any) {
+      setError(`下载更新失败: ${err.message || 'unknown error'}`)
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -61,23 +91,33 @@ export function SettingsPage() {
               版本
             </Typography>
             <Typography variant="body1">当前版本: {currentVersion || '...'}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            </Typography>
           </Box>
 
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
             <Button
               variant="contained"
               startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SystemUpdateAlt />}
               onClick={handleCheckUpdate}
-              disabled={loading}
+              disabled={loading || downloading}
             >
               {loading ? '检查中...' : '检查更新'}
             </Button>
 
             {latestInfo?.url && (
-              <Button variant="outlined" startIcon={<OpenInNew />} onClick={handleOpenReleasePage}>
-                打开下载页
+              <Button variant="outlined" startIcon={<OpenInNew />} onClick={handleOpenReleasePage} disabled={downloading}>
+                打开发布页
+              </Button>
+            )}
+
+            {hasUpdate && (
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={downloading ? <CircularProgress size={18} color="inherit" /> : <Download />}
+                onClick={handleDownloadAndInstall}
+                disabled={loading || downloading}
+              >
+                {downloading ? '下载中...' : '下载并安装更新'}
               </Button>
             )}
           </Stack>
@@ -86,6 +126,20 @@ export function SettingsPage() {
             <Typography variant="caption" color="text.secondary">
               上次检查时间: {checkedAt}
             </Typography>
+          )}
+
+          {downloading && downloadProgress && (
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Stack spacing={1}>
+                <Typography variant="body2" fontWeight={600}>
+                  正在下载更新: {downloadProgress.fileName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {downloadProgress.percent}% · {formatSpeed(downloadProgress.speed)}
+                </Typography>
+                <LinearProgress variant="determinate" value={downloadProgress.percent} />
+              </Stack>
+            </Paper>
           )}
 
           {error && <Alert severity="error">{error}</Alert>}

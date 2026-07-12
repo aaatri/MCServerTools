@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   detectServer: (dir: string) => ipcRenderer.invoke('server:detect', dir),
   getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
   checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
+  downloadAndInstallUpdate: () => ipcRenderer.invoke('app:downloadAndInstallUpdate'),
   openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
 
   onServerLog: (callback: (log: string) => void) => {
@@ -46,6 +47,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const h = (_: any, p: any) => callback(p)
     ipcRenderer.on('download:progress', h)
     return () => { ipcRenderer.removeListener('download:progress', h) }
+  },
+  onUpdateDownloadProgress: (callback: (p: any) => void) => {
+    const h = (_: any, p: any) => callback(p)
+    ipcRenderer.on('update:downloadProgress', h)
+    return () => { ipcRenderer.removeListener('update:downloadProgress', h) }
   },
 
   frpStart: (config: any) => ipcRenderer.invoke('frp:start', config),

@@ -34,6 +34,25 @@ declare global {
     fileName: string
   }
 
+  interface ReleaseAssetInfo {
+    name: string
+    url: string
+    size?: number
+  }
+
+  interface LatestReleaseInfo {
+    repo: string
+    source: string
+    version: string
+    tag: string
+    title: string
+    publishedAt?: string | null
+    url: string
+    notes: string[]
+    assets?: ReleaseAssetInfo[]
+    assetsCount?: number
+  }
+
   interface ServerDetection {
     jarName: string
     coreId: string
@@ -75,11 +94,12 @@ declare global {
     detectServer: (dir: string) => Promise<ServerDetection>
     getAppVersion: () => Promise<string>
     checkForUpdates: () => Promise<LatestReleaseInfo>
+    downloadAndInstallUpdate: () => Promise<{ filePath: string; assetName: string }>
     openExternal: (url: string) => Promise<void>
     onServerLog: (callback: (log: string) => void) => () => void
     onServerStatus: (callback: (status: string) => void) => () => void
     onDownloadProgress: (callback: (progress: DownloadProgress) => void) => () => void
-
+    onUpdateDownloadProgress: (callback: (progress: DownloadProgress) => void) => () => void
     frpStart: (config: FrpConfig) => Promise<void>
     frpStop: () => Promise<void>
     frpStatus: () => Promise<string>
@@ -93,17 +113,6 @@ declare global {
     token: string
     localPort: number
     remotePort: number
-  }
-
-  interface LatestReleaseInfo {
-    repo: string
-    source: string
-    version: string
-    tag: string
-    title: string
-    publishedAt?: string | null
-    url: string
-    notes: string[]
   }
 
   interface Window {

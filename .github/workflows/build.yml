@@ -104,7 +104,6 @@ jobs:
           path: artifacts
 
       - name: Create Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
@@ -122,7 +121,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json url,publishedAt,assets > release.json
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}" > release.json
 
           python3 - <<'PY'
           import json
@@ -135,8 +134,16 @@ jobs:
               "version": "1.0.3",
               "tag": "v1.0.3",
               "title": "v1.0.3",
-              "publishedAt": release.get("publishedAt"),
-              "url": release.get("url"),
+              "publishedAt": release.get("published_at"),
+              "url": release.get("html_url"),
+              "assets": [
+                  {
+                      "name": asset["name"],
+                      "url": asset["browser_download_url"],
+                      "size": asset.get("size"),
+                  }
+                  for asset in release.get("assets", [])
+              ],
               "assetsCount": len(release.get("assets", [])),
               "notes": [
                   "v1.0.3 更新内容",
