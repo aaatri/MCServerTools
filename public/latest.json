@@ -1,0 +1,28 @@
+{
+  "repo": "aaatri/MCServerTools",
+  "source": "github-release",
+  "version": "1.0.2",
+  "tag": "v1.0.2",
+  "title": "v1.0.2",
+  "publishedAt": "2026-07-10T18:59:03Z",
+  "url": "https://github.com/aaatri/MCServerTools/releases/tag/v1.0.2",
+  "assetsCount": 12,
+  "notes": [
+    "v1.0.2 更新内容",
+    "修复 NeoForge 版本列表无法获取导致下载按钮不可用",
+    "修复 Mohist 版本列表获取失败时误提示“核心未实现”",
+    "修复 Sponge 旧版 Ore API 失效导致版本列表无法获取",
+    "修复版本下拉框在无数据时被前端错误禁用的问题",
+    "优化切换核心时自动重新刷新版本列表",
+    "优化版本列表加载状态显示，新增“读取版本中”提示",
+    "优化版本列表为空时的提示文案，区分“暂无数据”和“获取失败”",
+    "补充 Vanilla 多源版本获取兜底",
+    "补充 Paper 多源版本获取兜底",
+    "补充 Fabric 多源版本获取兜底",
+    "补充 Forge 多源版本获取兜底",
+    "补充 NeoForge 多源版本获取兜底",
+    "补充 Mohist 多源版本获取兜底",
+    "补充 Sponge 新仓库源版本解析与下载支持",
+    "完成全部核心版本获取链路实测，确保 10 种核心均可返回版本列表"
+  ]
+}
