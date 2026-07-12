@@ -1,11 +1,27 @@
 import React from 'react'
 import {
-  Box, Drawer, List, ListItem, ListItemButton, ListItemIcon,
-  ListItemText, AppBar, Toolbar, Typography, IconButton, useTheme,
+  AppBar,
+  Box,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+  useTheme,
 } from '@mui/material'
 import {
-  Home as HomeIcon, Dashboard as ServerIcon, Dns as CoreIcon,
-  SettingsEthernet as FrpIcon, DarkMode, LightMode, Info as InfoIcon,
+  DarkMode,
+  Dashboard as ServerIcon,
+  Dns as CoreIcon,
+  Home as HomeIcon,
+  Info as InfoIcon,
+  LightMode,
+  Settings as SettingsIcon,
+  SettingsEthernet as FrpIcon,
 } from '@mui/icons-material'
 import { Page } from '../App'
 
@@ -16,6 +32,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'cores', label: '核心选择', icon: <CoreIcon /> },
   { id: 'server', label: '服务器管理', icon: <ServerIcon /> },
   { id: 'frp', label: 'FRP 设置', icon: <FrpIcon /> },
+  { id: 'settings', label: '设置', icon: <SettingsIcon /> },
   { id: 'about', label: '关于', icon: <InfoIcon /> },
 ]
 
@@ -32,7 +49,16 @@ export function Layout({ page, onPageChange, darkMode, onToggleDark, children }:
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
-      <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1, bgcolor: theme.palette.background.paper, color: theme.palette.text.primary, boxShadow: theme.shadows[4] }} elevation={0}>
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: theme.zIndex.drawer + 1,
+          bgcolor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
+          boxShadow: theme.shadows[4],
+        }}
+        elevation={0}
+      >
         <Toolbar>
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             Minecraft 服务器搭建工具
@@ -55,10 +81,7 @@ export function Layout({ page, onPageChange, darkMode, onToggleDark, children }:
         <List sx={{ pt: 1 }}>
           {navItems.map(item => (
             <ListItem key={item.id} disablePadding>
-              <ListItemButton
-                selected={page === item.id}
-                onClick={() => onPageChange(item.id)}
-              >
+              <ListItemButton selected={page === item.id} onClick={() => onPageChange(item.id)}>
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
               </ListItemButton>

@@ -7,6 +7,9 @@ export interface CoreInfo {
   id: string
   name: string
   type: 'vanilla' | 'bukkit' | 'modded' | 'hybrid'
+  categoryKey?: string
+  categoryName?: string
+  categoryDescription?: string
   description: string
   iconUrl?: string
   color: string

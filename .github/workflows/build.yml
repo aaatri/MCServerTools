@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   build:
+    if: github.actor != 'github-actions[bot]' || startsWith(github.ref, 'refs/tags/v')
     strategy:
       fail-fast: false
       matrix:
@@ -73,18 +74,17 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force release/dist | Out-Null
 
-          # Copy installer
           Get-ChildItem release -File | Where-Object {
-            $_.Extension -in '.exe','.dmg','.AppImage'
+            $_.Extension -in '.exe', '.dmg', '.AppImage'
           } | ForEach-Object {
             $newname = "MCServerTools-${{ matrix.suffix }}$($_.Extension)"
             Copy-Item $_.FullName "release/dist/$newname"
           }
 
-          # Zip the unpacked dir
           $appdir = Get-ChildItem release -Directory | Where-Object {
             -not $_.Name.StartsWith('.') -and $_.Name -ne 'dist'
           } | Select-Object -First 1
+
           if ($appdir) {
             Compress-Archive -Path "$($appdir.FullName)/*" -DestinationPath "release/dist/MCServerTools-${{ matrix.suffix }}.zip" -Force
           }
@@ -102,73 +102,59 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+
       - name: Create Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
           body: |
-            MCServerTools 首个正式版发布 🎉
+            ## v1.0.3 更新内容
 
-            ### 服务器核心管理
-            支持 10 种服务端核心**一键下载与部署**：
-            - **原版** Vanilla
-            - **Bukkit 系列** Paper、Purpur、CraftBukkit、Spigot
-            - **Mod 加载器** Forge、Fabric、NeoForge、Sponge
-            - **混合核心** Mohist
-
-            下载时实时显示**进度条**、**下载速度**和**文件名**，下载完成后自动保存到服务器列表。
-
-            ### 服务器管理
-            - **多服务器管理** — 支持添加多台服务器，下拉切换，自定义名称
-            - **启动/停止** — 一键启停，支持内存分配（512MB - 16GB）
-            - **日志查看** — 实时日志输出，支持滚动查看
-            - **控制台命令** — 输入 Minecraft 指令（/op、/gamemode 等）
-            - **强制停止** — 进程无响应时可强制终止
-            - **Java 自动检测** — 自动识别系统 Java 环境
-
-            ### 配置编辑器
-            - **图形化 server.properties 编辑器** — 35+ 项配置中文标注
-            - 支持开关（正版验证、PVP、白名单等）
-            - 下拉选择（难度、游戏模式等）
-            - 数字/文本输入（端口、视距、种子等）
-            - 无需手动编辑配置文件
-
-            ### FRP 内网穿透
-            - **内置 frpc 客户端** — 首次启动自动下载
-            - 支持 frp 服务器地址、端口、Token 配置
-            - 本地端口/远程端口自定义
-            - 连接状态实时显示 + 日志输出
-
-            ### 界面
-            - **Material Design** 设计风格
-            - **浅色/深色主题**一键切换
-            - 侧边栏导航，页面切换不丢失状态
-            - 关于页面（版本信息、GitHub 链接）
-
-            ### 跨平台支持
-            - **Windows** AMD64 / ARM64（NSIS 安装包 + 便携版）
-            - **macOS** Intel / Apple Silicon（DMG 安装包 + 便携版）
-            - **Linux** AMD64 / ARM64（AppImage + 便携版）
-
-            ### 下载说明
-            每个平台提供两种格式：
-            - **安装包**（`.exe` / `.dmg` / `.AppImage`）— 直接安装运行
-            - **便携包**（`.zip`）— 解压即用，无需安装
-
-            ### v1.0.1 更新内容
-            - 修复 npm run dev 时 Electron 窗口不显示
-            - 修复开发环境自动弹出 Developer Tools
-            - 修复关闭 Electron 窗口后应用进程未立即退出
-            - 修复服务端启动后"配置"页面不自动刷新 server.properties
-            - 新增删除服务器二次确认，可选择仅从列表移除或同时删除文件
-            - 新增运行中服务器删除保护，删除文件前需先停服
-            - 新增下载完成后自动生成 profilemcsrv.toml
-            - 新增"添加已有服务器"时自动读取 profilemcsrv.toml 回填服务器信息
-            - 优化主进程窗口生命周期与启动日志处理
-            - 修复 IPC 重复注册的潜在问题
-
-            ---
-            制作者：小亚 | [GitHub](https://github.com/aaatri/MCServerTools)
-          generate_release_notes: true
+            - 新增设置页面与检查更新功能
+            - 重构服务端核心下载页以及逻辑
+            - 重构服务端核心列表来源
+            - 补充更多核心类型的自动识别支持
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest.json on master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json url,publishedAt,assets > release.json
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          release = json.loads(Path("release.json").read_text(encoding="utf-8"))
+          latest = {
+              "repo": "aaatri/MCServerTools",
+              "source": "github-release",
+              "version": "1.0.3",
+              "tag": "v1.0.3",
+              "title": "v1.0.3",
+              "publishedAt": release.get("publishedAt"),
+              "url": release.get("url"),
+              "assetsCount": len(release.get("assets", [])),
+              "notes": [
+                  "v1.0.3 更新内容",
+                  "新增设置页面与检查更新功能",
+                  "重构服务端核心下载页以及逻辑",
+                  "重构服务端核心列表来源",
+                  "补充更多核心类型的自动识别支持",
+              ],
+          }
+          Path("latest.json").write_text(json.dumps(latest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          git checkout master
+          cp ../latest.json public/latest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/latest.json
+          git commit -m "chore: update latest.json for ${GITHUB_REF_NAME}" || exit 0
+          git push origin master

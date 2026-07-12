@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   detectJava: () => ipcRenderer.invoke('java:detect'),
   detectServer: (dir: string) => ipcRenderer.invoke('server:detect', dir),
+  getAppVersion: () => ipcRenderer.invoke('app:getVersion'),
+  checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
+  openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
 
   onServerLog: (callback: (log: string) => void) => {
     const h = (_: any, log: string) => callback(log)

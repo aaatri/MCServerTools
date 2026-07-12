@@ -7,6 +7,9 @@ declare global {
     id: string
     name: string
     type: 'vanilla' | 'bukkit' | 'modded' | 'hybrid'
+    categoryKey?: string
+    categoryName?: string
+    categoryDescription?: string
     description: string
     iconUrl?: string
     color: string
@@ -70,6 +73,9 @@ declare global {
     selectDirectory: () => Promise<string | null>
     detectJava: () => Promise<JavaInfo | null>
     detectServer: (dir: string) => Promise<ServerDetection>
+    getAppVersion: () => Promise<string>
+    checkForUpdates: () => Promise<LatestReleaseInfo>
+    openExternal: (url: string) => Promise<void>
     onServerLog: (callback: (log: string) => void) => () => void
     onServerStatus: (callback: (status: string) => void) => () => void
     onDownloadProgress: (callback: (progress: DownloadProgress) => void) => () => void
@@ -87,6 +93,17 @@ declare global {
     token: string
     localPort: number
     remotePort: number
+  }
+
+  interface LatestReleaseInfo {
+    repo: string
+    source: string
+    version: string
+    tag: string
+    title: string
+    publishedAt?: string | null
+    url: string
+    notes: string[]
   }
 
   interface Window {
