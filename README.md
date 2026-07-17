@@ -22,7 +22,8 @@
 </p>
 
 > **注意：** 目前 MCServerTools 处于开发完善阶段，可能存在部分 BUG，欢迎通过 Issues 提交反馈。
-> **此仓库废弃了喵，新地址：** [我的世界服务器管理工具](github.com/YSKeLi/MCSTools)
+
+> **此仓库废弃了喵，新地址：** [https://github.com/aaatri/MCServerTools](https://github.com/aaatri/MCServerTools)
 
 ---
 
